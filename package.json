@@ -1,0 +1,22 @@
+{
+  "name": "multiplayer-tag",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@gitlab.csc.uvic.ca:courses/2020091/SENG350/teams/group_11/multiplayer-tag.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.17.1",
+    "save": "^2.4.0",
+    "socket.io": "^2.3.0"
+  }
+}
