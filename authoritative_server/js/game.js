@@ -1,4 +1,4 @@
-const players = {};
+const playerStates = {};
 
 const config = {
     type: Phaser.HEADLESS,
@@ -27,20 +27,21 @@ const config = {
    
   function create() {
       const self = this;
-      this.players = this.physics.add.group();
+
+      this.playerPhysGroup = this.physics.add.group();
       let groundX = this.sys.game.config.width / 2; 
       let groundY = this.sys.game.config.height * .95;
       this.ground = this.physics.add.sprite(groundX, groundY, 'ground');
       this.ground.setImmovable();
       io.on('connection', function(socket){
-        console.log('a user connected');
-        // create a new player and add it to our players object
-        players[socket.id] = {
+        console.log('user ' + socket.id + ' connected');
+        // create a new player and add it to our playerStates object
+        playerStates[socket.id] = {
             onGround: false,
             x: Math.floor(Math.random() * 700) + 50,
             y: Math.floor(Math.random() * 500) + 50,
             playerId: socket.id,
-            team: (Math.floor(Math.random() * 2) == 0) ? 'red' : 'blue',
+            colour: 0x000fff,
             input: {
                 left: false,
                 right: false,
@@ -48,18 +49,18 @@ const config = {
               }
         };
         // add player to server
-        addPlayer(self, players[socket.id]);
-        // send the players object to the new player
-        socket.emit('currentPlayers', players);
-        // update all other players of the new player
-        socket.broadcast.emit('newPlayer', players[socket.id]);
+        addPlayer(self, playerStates[socket.id]);
+        // send the playerStates object to the new player
+        socket.emit('currentPlayers', playerStates);
+        // update all other playerStates of the new player
+        socket.broadcast.emit('newPlayer', playerStates[socket.id]);
         socket.on('disconnect', function (){
-            console.log('user disconnected');
+            console.log('user ' + socket.id + ' disconnected');
             // remove player from server
             removePlayer(self, socket.id);
-            // remove this player from our players object
-            delete players[socket.id];
-            // emit a message to all players to remove this player
+            // remove this player from our playerStates object
+            delete playerStates[socket.id];
+            // emit a message to all playerStates to remove this player
             io.emit('disconnect', socket.id);
         });
         // when a player moves, update the player data
@@ -70,8 +71,8 @@ const config = {
   }
 
   function update() {
-    this.players.getChildren().forEach((player) => {
-        const input = players[player.playerId].input;
+    this.playerPhysGroup.getChildren().forEach((player) => {
+        const input = playerStates[player.playerId].input;
         if (input.left) {
           player.setVelocityX(-160);
         } else if (input.right) {
@@ -87,12 +88,12 @@ const config = {
           player.setGravityY(300);
         }
        
-        players[player.playerId].x = player.x;
-        players[player.playerId].y = player.y;
-        players[player.playerId].onGround = player.onGround;
+        playerStates[player.playerId].x = player.x;
+        playerStates[player.playerId].y = player.y;
+        playerStates[player.playerId].onGround = player.onGround;
       });
-      this.physics.world.wrap(this.players, 5);
-      io.emit('playerUpdates', players);
+      this.physics.world.wrap(this.playerPhysGroup, 5);
+      io.emit('playerUpdates', playerStates);
   }
 
   function onGroundFunc(player){
@@ -100,9 +101,9 @@ const config = {
   }
 
   function handlePlayerInput(self, playerId, input) {
-    self.players.getChildren().forEach((player) => {
+    self.playerPhysGroup.getChildren().forEach((player) => {
       if (playerId === player.playerId) {
-        players[player.playerId].input = input;
+        playerStates[player.playerId].input = input;
       }
     });
   }
@@ -112,18 +113,80 @@ const config = {
     player.setDrag(100);
     player.setAngularDrag(100);
     player.setMaxVelocity(200);
-    player.playerId = playerInfo.playerId;
     player.body.enable;
+    player.playerId = playerInfo.playerId;
+    player.gameInstance = self;
+    if(Object.keys(playerStates).length == 1){
+      player.ts = new Tagged(player);
+    } else {
+      player.ts = new NotTagged(player);
+    }
+
+
     self.physics.add.collider(player, self.ground, onGroundFunc);
-    self.players.add(player);
+    self.playerPhysGroup.getChildren().forEach((otherPlayer) => {
+      self.physics.add.collider(player, otherPlayer, function (player, otherPlayer) {
+        handlePlayerCollision(player, otherPlayer);
+      });
+    });
+    self.playerPhysGroup.add(player);
   }
 
   function removePlayer(self, playerId) {
-    self.players.getChildren().forEach((player) => {
+    self.playerPhysGroup.getChildren().forEach((player) => {
       if (playerId === player.playerId) {
         player.destroy();
       }
     });
+  }
+
+  function handlePlayerCollision(p1, p2) {
+      p1.ts = p1.ts.goToNextState(p1, p2);
+  }
+
+  class NotTagged {
+    constructor(p){
+      playerStates[p.playerId].colour = 0x000fff;
+    }
+
+    goToNextState(p1, p2){
+      if(p2.ts instanceof Tagged) {
+        p2.ts = new NotTagged(p2);
+        return new WarmingUp(p1);
+      } else {
+        return this;
+      }
+    }
+  }
+
+  class Tagged {
+    constructor(p){
+      playerStates[p.playerId].colour = 0xff0000;
+    }
+
+    goToNextState(p1, p2){
+      if(p2.ts instanceof NotTagged) {
+        p2.ts = new WarmingUp(p2);
+        return new NotTagged(p1);
+      } else {
+        return this;
+      }
+    }
+  }
+
+  class WarmingUp {
+    constructor(p){
+      playerStates[p.playerId].colour = 0xffff00;
+      p.gameInstance.time.delayedCall(3000, this.transitionToTagged,[p], p.gameInstance);
+    }
+
+    goToNextState(p1, p2) {
+      return this;
+    }
+
+    transitionToTagged(p){
+      p.ts = new Tagged(p);
+    }
   }
 
   const game = new Phaser.Game(config);
