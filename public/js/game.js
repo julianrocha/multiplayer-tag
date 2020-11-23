@@ -6,8 +6,8 @@ var config = {
   physics: {
     default: 'arcade',
     arcade: {
-      debug: false,
-      gravity: { y: 0 }
+      debug: true,
+      gravity: { y: 0}
     }
   },
   scene: {
@@ -21,89 +21,85 @@ var game = new Phaser.Game(config);
  
 function preload() {
   this.load.image('mushroom', 'assets/mushroom2.png');
+  this.load.image('otherPlayer', 'assets/mushroom2.png');
+  this.load.image('ground', 'assets/ground.png');
 }
  
 function create() {
   var self = this;
   this.socket = io();
-  this.otherPlayers = this.physics.add.group();
+  this.players = this.physics.add.group();
+
+  let groundX = this.sys.game.config.width / 2; 
+  let groundY = this.sys.game.config.height * .95;
+  this.ground = this.physics.add.sprite(groundX, groundY, 'ground');
+ 
   this.socket.on('currentPlayers', function (players) {
     Object.keys(players).forEach(function (id) {
       if (players[id].playerId === self.socket.id) {
-        addPlayer(self, players[id]);
+        displayPlayers(self, players[id], 'mushroom');
       } else {
-        addOtherPlayers(self, players[id]);
+        displayPlayers(self, players[id], 'otherPlayer');
       }
     });
   });
+ 
   this.socket.on('newPlayer', function (playerInfo) {
-    addOtherPlayers(self, playerInfo);
+    displayPlayers(self, playerInfo, 'otherPlayer');
   });
+ 
   this.socket.on('disconnect', function (playerId) {
-    self.otherPlayers.getChildren().forEach(function (otherPlayer) {
-      if (playerId === otherPlayer.playerId) {
-        otherPlayer.destroy();
+    self.players.getChildren().forEach(function (player) {
+      if (playerId === player.playerId) {
+        player.destroy();
       }
     });
   });
-  this.socket.on('playerMoved', function (playerInfo) {
-    self.otherPlayers.getChildren().forEach(function (otherPlayer) {
-      if (playerInfo.playerId === otherPlayer.playerId) {
-        otherPlayer.setPosition(playerInfo.x, playerInfo.y);
-      }
+  this.socket.on('playerUpdates', function (players) {
+    //Define as its own function
+    Object.keys(players).forEach(function (id) {
+      self.players.getChildren().forEach(function (player) {
+        if (players[id].playerId === player.playerId) {
+          player.setPosition(players[id].x, players[id].y);
+        }
+      });
     });
   });
   this.cursors = this.input.keyboard.createCursorKeys();
+  this.leftKeyPressed = false;
+  this.rightKeyPressed = false;
+  this.upKeyPressed = false;
 }
  
 function update() {
-  if(this.mushroom) {
-    if(this.cursors.left.isDown) {
-      this.mushroom.setVelocityX(-160);
-    } else if (this.cursors.right.isDown) {
-      this.mushroom.setVelocityX(160);
-    } else if (this.cursors.up.isDown) {
-      this.mushroom.setVelocityY(-160);
-    } else if (this.cursors.down.isDown) {
-      this.mushroom.setVelocityY(160);
-    } else {
-      this.mushroom.setVelocityX(0);
-      this.mushroom.setVelocityY(0);
-    }
-    // emit player movement
-    var x = this.mushroom.x;
-    var y = this.mushroom.y;
-    if (this.mushroom.oldPosition && (x !== this.mushroom.oldPosition.x || y !== this.mushroom.oldPosition.y)) {
-      this.socket.emit('playerMovement', { x: this.mushroom.x, y: this.mushroom.y });
-    }
-
-    // save old position data
-    this.mushroom.oldPosition = {
-      x: this.mushroom.x,
-      y: this.mushroom.y,
-    };
+  const left = this.leftKeyPressed;
+  const right = this.rightKeyPressed;
+  const up = this.upKeyPressed;
+  
+  if (this.cursors.left.isDown && !this.cursors.right.isDown) {
+    this.leftKeyPressed = true;
+  } else if (this.cursors.right.isDown && !this.cursors.left.isDown) {
+    this.rightKeyPressed = true;
+  } else {
+    this.leftKeyPressed = false;
+    this.rightKeyPressed = false;
+  }
+  
+  if (this.cursors.up.isDown) {
+    this.upKeyPressed = true;
+  } else {
+    this.upKeyPressed = false;
+  }
+  
+  if (left !== this.leftKeyPressed || right !== this.rightKeyPressed || up !== this.upKeyPressed) {
+    this.socket.emit('playerInput', { left: this.leftKeyPressed , right: this.rightKeyPressed, up: this.upKeyPressed });
   }
 }
 
-function addPlayer(self, playerInfo) {
-  self.mushroom = self.physics.add.image(playerInfo.x, playerInfo.y, 'mushroom').setOrigin(0.5, 0.5).setDisplaySize(53, 40);
-  if (playerInfo.colour === 'blue') {
-    self.mushroom.setTint(0x0000ff);
-  } else {
-    self.mushroom.setTint(0xff0000);
-  }
-  self.mushroom.setDrag(100);
-  self.mushroom.setAngularDrag(100);
-  self.mushroom.setMaxVelocity(200);
-}
-
-function addOtherPlayers(self, playerInfo) {
-  const otherPlayer = self.add.sprite(playerInfo.x, playerInfo.y, 'mushroom').setOrigin(0.5, 0.5).setDisplaySize(53, 40);
-  if (playerInfo.colour === 'blue') {
-    otherPlayer.setTint(0x0000ff);
-  } else {
-    otherPlayer.setTint(0xff0000);
-  }
-  otherPlayer.playerId = playerInfo.playerId;
-  self.otherPlayers.add(otherPlayer);
+function displayPlayers(self, playerInfo, sprite) {
+  const player = self.add.sprite(playerInfo.x, playerInfo.y, sprite).setOrigin(0, 0).setDisplaySize(53, 40, true).setSize(53, 40, true);
+  if (playerInfo.team === 'blue') player.setTint(0x0000ff);
+  else player.setTint(0xff0000);
+  player.playerId = playerInfo.playerId;
+  self.players.add(player);
 }
