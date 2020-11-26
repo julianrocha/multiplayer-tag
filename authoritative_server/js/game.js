@@ -126,7 +126,7 @@ const config = {
     self.physics.add.collider(player, self.ground, onGroundFunc);
     self.playerPhysGroup.getChildren().forEach((otherPlayer) => {
       self.physics.add.collider(player, otherPlayer, function (player, otherPlayer) {
-        handlePlayerCollision(player, otherPlayer);
+        player.ts = player.ts.goToNextState(player, otherPlayer);
       });
     });
     self.playerPhysGroup.add(player);
@@ -138,10 +138,6 @@ const config = {
         player.destroy();
       }
     });
-  }
-
-  function handlePlayerCollision(p1, p2) {
-      p1.ts = p1.ts.goToNextState(p1, p2);
   }
 
   class NotTagged {
@@ -161,7 +157,7 @@ const config = {
 
   class Tagged {
     constructor(p){
-      playerStates[p.playerId].colour = 0xff0000;
+      if(playerStates[p.playerId]) playerStates[p.playerId].colour = 0xff0000;
     }
 
     goToNextState(p1, p2){
