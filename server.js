@@ -8,8 +8,6 @@ const datauri = new Datauri();
 const {JSDOM} = jsdom;
 const io = require('socket.io').listen(server);
 
-var players = {};
-
 app.use(express.static(__dirname + '/public'));
 
 app.get('/', function (req, res) {
