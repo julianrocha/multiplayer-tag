@@ -6,8 +6,7 @@ var config = {
   physics: {
     default: 'arcade',
     arcade: {
-      debug: true,
-      gravity: { y: 0}
+      debug: true
     }
   },
   scene: {
@@ -21,9 +20,10 @@ var game = new Phaser.Game(config);
  
 function preload() {
   this.load.image('mushroom', 'assets/mushroom2.png');
-  this.load.image('otherPlayer', 'assets/mushroom2.png');
   this.load.image('ground', 'assets/ground.png');
 }
+
+var playerStates = {};
  
 function create() {
   var self = this;
@@ -32,20 +32,15 @@ function create() {
 
   let groundX = this.sys.game.config.width / 2; 
   let groundY = this.sys.game.config.height * .95;
-  this.ground = this.physics.add.sprite(groundX, groundY, 'ground');
- 
+  this.ground = this.add.sprite(groundX, groundY, 'ground');
   this.socket.on('currentPlayers', function (players) {
     Object.keys(players).forEach(function (id) {
-      if (players[id].playerId === self.socket.id) {
-        displayPlayers(self, players[id], 'mushroom');
-      } else {
-        displayPlayers(self, players[id], 'otherPlayer');
-      }
+      displayPlayers(self, players[id], 'mushroom');
     });
   });
  
   this.socket.on('newPlayer', function (playerInfo) {
-    displayPlayers(self, playerInfo, 'otherPlayer');
+    displayPlayers(self, playerInfo, 'mushroom');
   });
  
   this.socket.on('disconnect', function (playerId) {
@@ -57,10 +52,13 @@ function create() {
   });
   this.socket.on('playerUpdates', function (players) {
     //Define as its own function
+    playerStates = players;
+
     Object.keys(players).forEach(function (id) {
       self.players.getChildren().forEach(function (player) {
         if (players[id].playerId === player.playerId) {
           player.setPosition(players[id].x, players[id].y);
+          player.setTint(players[id].colour);
         }
       });
     });
@@ -98,8 +96,7 @@ function update() {
 
 function displayPlayers(self, playerInfo, sprite) {
   const player = self.add.sprite(playerInfo.x, playerInfo.y, sprite).setOrigin(0, 0).setDisplaySize(53, 40, true).setSize(53, 40, true);
-  if (playerInfo.team === 'blue') player.setTint(0x0000ff);
-  else player.setTint(0xff0000);
+  player.setTint(playerInfo.colour);
   player.playerId = playerInfo.playerId;
   self.players.add(player);
 }
