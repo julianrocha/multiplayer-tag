@@ -6,8 +6,7 @@ var config = {
   physics: {
     default: 'arcade',
     arcade: {
-      debug: true,
-      gravity: { y: 0}
+      debug: true
     }
   },
   scene: {
@@ -33,8 +32,7 @@ function create() {
 
   let groundX = this.sys.game.config.width / 2; 
   let groundY = this.sys.game.config.height * .95;
-  this.ground = this.physics.add.sprite(groundX, groundY, 'ground');
- 
+  this.ground = this.add.sprite(groundX, groundY, 'ground');
   this.socket.on('currentPlayers', function (players) {
     Object.keys(players).forEach(function (id) {
       displayPlayers(self, players[id], 'mushroom');
