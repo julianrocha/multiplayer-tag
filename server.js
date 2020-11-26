@@ -8,8 +8,6 @@ const datauri = new Datauri();
 const {JSDOM} = jsdom;
 const io = require('socket.io').listen(server);
 
-var players = {};
-
 app.use(express.static(__dirname + '/public'));
 
 app.get('/', function (req, res) {
@@ -33,6 +31,10 @@ function setupAuthoritativePhaser() {
 		  dom.window.URL.revokeObjectURL = (objectURL) => {};
 	  	dom.window.gameLoaded = () => {
 		  dom.window.io = io;
+		  let port = process.env.PORT;
+		  if(port == null || port == ""){
+			port = 5000;
+		  }
 		  server.listen(8081, function () {
 		  console.log(`Listening on ${server.address().port}`);
 		});
