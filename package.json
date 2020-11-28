@@ -1,7 +1,7 @@
 {
   "name": "multiplayer-tag",
   "version": "1.0.0",
-  "description": "",
+  "description": "A multiplayer platform tag game built by Julian and Chris for SENG 350 Fall 2020 Term Project. Based on a client/server architecture, written in Javascript.",
   "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
@@ -12,7 +12,7 @@
     "url": "git@gitlab.csc.uvic.ca:courses/2020091/SENG350/teams/group_11/multiplayer-tag.git"
   },
   "keywords": [],
-  "author": "",
+  "author": "Chris and Julian",
   "license": "ISC",
   "dependencies": {
     "canvas": "^2.6.1",
