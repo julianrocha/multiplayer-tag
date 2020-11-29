@@ -122,10 +122,6 @@ const config = {
     player.setDrag(25);
   }
 
-  function collidedFunc(player){
-    console.log("collided");
-  }
-
   function removePlayer(self, playerId) {
     self.playerPhysGroup.getChildren().forEach((player) => {
       if (playerId === player.playerId) {
