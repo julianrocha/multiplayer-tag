@@ -17,6 +17,7 @@
   "dependencies": {
     "canvas": "^2.6.1",
     "datauri": "^3.0.0",
+    "esm": "^3.2.25",
     "express": "^4.17.1",
     "jsdom": "^16.4.0",
     "save": "^2.4.0",
