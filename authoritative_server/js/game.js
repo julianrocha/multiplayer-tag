@@ -1,4 +1,5 @@
 const playerStates = {};
+const platformArray = [];
 
 const config = {
     type: Phaser.HEADLESS,
@@ -54,6 +55,9 @@ const config = {
         socket.emit('currentPlayers', playerStates);
         // update all other playerStates of the new player
         socket.broadcast.emit('newPlayer', playerStates[socket.id]);
+        for(let i = 0; i < 4; i++){
+          socket.emit('platformLocation', {x: platformArray[i].xLoc, y: platformArray[i].yLoc, scaleX: platformArray[i].scaleX, scaleY: platformArray[i].scaleY});
+        }
         socket.on('disconnect', function (){
             console.log('user ' + socket.id + ' disconnected');
             // remove player from server
@@ -97,6 +101,7 @@ const config = {
     self.physics.add.collider(platform, self.playerPhysGroup);
     self.platforms.add(platform);
     platform.setImmovable();
+    platformArray.push(platform);
   }
 
   function addPlayer(self, playerInfo){
@@ -113,7 +118,7 @@ const config = {
     player.ms = new inAir(player);
     self.playerPhysGroup.getChildren().forEach((otherPlayer) => {
       self.physics.add.overlap(player, otherPlayer, function (player, otherPlayer) {
-        handlePlayerCollision(player, otherPlayer);
+        player.ts = player.ts.goToNextState(player, otherPlayer);
       });
     });
     self.playerPhysGroup.add(player);
@@ -128,149 +133,6 @@ const config = {
         player.destroy();
       }
     });
-  }
-
-  function handlePlayerCollision(p1, p2) {
-      p1.ts = p1.ts.goToNextState(p1, p2);
-  }
-
-  class airLean {
-    constructor(p){
-      console.log("ENTERED THE AIRLEAN STATE");
-    }
-
-    goToNextState(player, input){
-      /* If the player is on the ground and the one of the right or left inputs are being pressed, go to sprinting state */
-      if(player.body.touching.down && (input.left || input.right)){
-        return new Sprinting(player);
-      } 
-      /* If neither input left or right are being pressed and the player is stil in the air, then go to the inAir state */
-      else if(!(input.left || input.right)){
-        player.setAccelerationX(0);
-        return new inAir(player);
-      } else{
-        return this;
-      }
-    }
-  }
-
-  class inAir {
-    constructor(p){
-      console.log("ENTERED THE INAIR STATE");
-    }
-    goToNextState(player, input){
-      /* Go to the air lean state if either input left or right exists. */
-      if(input.left || input.right) {
-        if(input.left){
-          player.setAccelerationX(-350);
-        } else{
-          player.setAccelerationX(350);
-        }
-        return new airLean(player);
-      } 
-      /* Go to standing state if the player is on the ground */
-      else if(player.body.touching.down){
-        return new Standing(player);
-      } else{
-        return this;
-      }
-    }
-  }
-
-  class Sprinting {
-    constructor(p){
-      console.log("ENTERED THE SPRINTING STATE");
-    }
-
-    goToNextState(player, input){
-      /* Going to air lean with a jump */
-      if(input.up && player.body.touching.down && (input.left || input.right)){
-        player.setVelocityY(-400);
-        return new airLean(player);
-      } 
-      /* Going to air lean from falling off a ledge */
-      else if((input.left || input.right) && !player.body.touching.down){
-        return new airLean(player);
-      } 
-      /* Going to standing state when no inputs are being pressed and the player is touching the ground */
-      else if(!(input.left || input.right || input.up) && player.body.touching.down){
-        player.setAccelerationX(0);
-        return new Standing(player);
-      } 
-      else{
-        return this;
-      }
-    }
-  }
-
-  class Standing {
-    constructor(p){
-      console.log("ENTERED THE STANDING STATE");
-    }
-
-    goToNextState(player, input){
-      /* If input left or right are being pressed and input up is not being pressed, then go to the sprinting state */
-      if((input.left || input.right) && !input.up) {
-        if(input.left){
-          player.setAccelerationX(-350);
-        } else{
-          player.setAccelerationX(350);
-        }
-        return new Sprinting(player);
-      }
-      /* if input up is being pressed and all directional velocitys are zero, then go to the inAir state */
-      else if(input.up){
-        player.setVelocityY(-400);
-        return new inAir(player);
-      } else{
-        return this;
-      }
-    }
-  }
-
-  class NotTagged {
-    constructor(p){
-      playerStates[p.playerId].colour = 0x000fff;
-    }
-
-    goToNextState(p1, p2){
-      if(p2.ts instanceof Tagged) {
-        p2.ts = new NotTagged(p2);
-        return new WarmingUp(p1);
-      } else {
-        return this;
-      }
-    }
-  }
-
-  class Tagged {
-    constructor(p){
-      if(playerStates[p.playerId]) playerStates[p.playerId].colour = 0xff0000;
-    }
-
-    goToNextState(p1, p2){
-      if(p2.ts instanceof NotTagged) {
-        p2.ts = new WarmingUp(p2);
-        return new NotTagged(p1);
-      } else {
-        return this;
-      }
-    }
-  }
-
-  class WarmingUp {
-    constructor(p){
-      playerStates[p.playerId].colour = 0xffff00;
-      p.gameInstance.time.delayedCall(3000, this.transitionToTagged,[p], p.gameInstance);
-    }
-
-    goToNextState(p1, p2) {
-      return this;
-    }
-
-    transitionToTagged(p){
-      p.ts = new Tagged(p);
-    }
   }
 
   const game = new Phaser.Game(config);
