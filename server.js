@@ -32,10 +32,10 @@ function setupAuthoritativePhaser() {
 	  	dom.window.gameLoaded = () => {
 		  dom.window.io = io;
 		  let port = process.env.PORT;
-		  if(port == null || port == ""){
+		  if (port == null || port == "") {
 			port = 5000;
 		  }
-		  server.listen(8081, function () {
+		  server.listen(port, function () {
 		  console.log(`Listening on ${server.address().port}`);
 		});
 	  };

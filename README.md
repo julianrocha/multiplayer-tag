@@ -11,9 +11,9 @@ To install JS dependencies, run this in project directory:
 ```
 $ npm install
 ```
-To run local server, at http://localhost:8081/
+To run local server, at http://localhost:5000/
 ```
-$ node server.js
+$ heroku local web
 ```
 
 ## References:
