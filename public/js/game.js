@@ -21,6 +21,7 @@ var game = new Phaser.Game(config);
 function preload() {
   this.load.image('mushroom', 'assets/mushroom2.png');
   this.load.image('ground', 'assets/ground.png');
+  this.load.image('background', 'assets/clouds.jpeg');
 }
 
 var playerStates = {};
@@ -29,6 +30,15 @@ function create() {
   var self = this;
   this.socket = io();
   this.players = this.add.group();
+
+  this.add.sprite(this.sys.game.config.width / 2, this.sys.game.config.height / 2, 'background');
+  
+  this.countdown = this.add.text(16, 16, 'Time Left: ', { fontSize: '40px', fill: '#FF0000' });
+  this.socket.on('tick', function (timeLeft) {
+    self.countdown.setText('Time Left: ' + timeLeft);
+  });
+
+
   let groundX = this.sys.game.config.width / 2; 
   let groundY = this.sys.game.config.height * 1;
   this.ground = this.add.sprite(groundX, groundY, 'ground');
