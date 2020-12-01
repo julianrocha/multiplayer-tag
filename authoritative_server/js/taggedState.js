@@ -1,6 +1,6 @@
 class Tagged {
     constructor(p){
-      playerStates[p.playerId].colour = 0xff0000;
+      p.colour = 0xff0000;
     }
 
     goToNextState(p1, p2){

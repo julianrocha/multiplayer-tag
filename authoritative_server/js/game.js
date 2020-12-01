@@ -116,7 +116,7 @@ const config = {
 
   function addPlayer(self, playerInfo){
     const player = self.physics.add.sprite(playerInfo.x, playerInfo.y, 'mushroom').setOrigin(0, 0).setDisplaySize(53, 40, true);
-    player.setMaxVelocity(375);
+    player.setMaxVelocity(450);
     player.body.enable;
     player.playerId = playerInfo.playerId;
     player.gameInstance = self;
