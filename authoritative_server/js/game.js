@@ -34,6 +34,11 @@ const config = {
       buildPlatform(self, 0, this.sys.game.config.height * 0.66, 0.5, 0.2);
       buildPlatform(self, this.sys.game.config.width / 1, this.sys.game.config.height * 0.66, 0.5, 0.2);
       buildPlatform(self, this.sys.game.config.width / 2, this.sys.game.config.height * 0.33, 0.5, 0.2);
+      
+      this.timeLeft = 120;
+      this.time.addEvent({delay: 1000, loop: true, callback: tick, args: [self]});
+      
+      
       io.on('connection', function(socket){
         console.log('user ' + socket.id + ' connected');
         // create a new player and add it to our playerStates object
@@ -80,6 +85,7 @@ const config = {
         player.ms = player.ms.goToNextState(player, input);
         playerStates[player.playerId].x = player.x;
         playerStates[player.playerId].y = player.y;
+        playerStates[player.playerId].colour = player.colour;
       });
       io.emit('playerUpdates', playerStates);
   }
@@ -90,6 +96,10 @@ const config = {
         playerStates[player.playerId].input = input;
       }
     });
+  }
+
+  function tick(self){
+    io.emit('tick', self.timeLeft--);
   }
 
   function buildPlatform(self, xLoc, yLoc, xScale, yScale){
@@ -106,7 +116,7 @@ const config = {
 
   function addPlayer(self, playerInfo){
     const player = self.physics.add.sprite(playerInfo.x, playerInfo.y, 'mushroom').setOrigin(0, 0).setDisplaySize(53, 40, true);
-    player.setMaxVelocity(500);
+    player.setMaxVelocity(450);
     player.body.enable;
     player.playerId = playerInfo.playerId;
     player.gameInstance = self;

@@ -21,6 +21,7 @@ var game = new Phaser.Game(config);
 function preload() {
   this.load.image('mushroom', 'assets/mushroom2.png');
   this.load.image('ground', 'assets/ground.png');
+  this.load.image('background', 'assets/clouds.jpeg');
 }
 
 var playerStates = {};
@@ -29,6 +30,15 @@ function create() {
   var self = this;
   this.socket = io();
   this.players = this.add.group();
+
+  this.add.sprite(this.sys.game.config.width / 2, this.sys.game.config.height / 2, 'background');
+  
+  this.countdown = this.add.text(16, 16, 'Time Left: ', { fontSize: '40px', fill: '#FF0000' });
+  this.socket.on('tick', function (timeLeft) {
+    self.countdown.setText('Time Left: ' + timeLeft);
+  });
+
+
   this.socket.on('currentPlayers', function (players) {
     Object.keys(players).forEach(function (id) {
       displayPlayers(self, players[id], 'mushroom');
@@ -66,33 +76,35 @@ function create() {
   });
 
   this.cursors = this.input.keyboard.createCursorKeys();
-  this.leftKeyPressed = false;
-  this.rightKeyPressed = false;
-  this.upKeyPressed = false;
 }
  
 function update() {
-  const left = this.leftKeyPressed;
-  const right = this.rightKeyPressed;
-  const up = this.upKeyPressed;
   
-  if (this.cursors.left.isDown && !this.cursors.right.isDown) {
-    this.leftKeyPressed = true;
-  } else if (this.cursors.right.isDown && !this.cursors.left.isDown) {
-    this.rightKeyPressed = true;
+  var input = playerStates[this.socket.id].input;
+  const left = input.left;
+  const right = input.right;
+  const up = input.up;
+  
+  if (this.cursors.left.isDown) {
+    input.left = true;
   } else {
-    this.leftKeyPressed = false;
-    this.rightKeyPressed = false;
+    input.left = false;
+  }
+
+  if (this.cursors.right.isDown) {
+    input.right = true;
+  } else {
+    input.right = false;
   }
   
   if (this.cursors.up.isDown) {
-    this.upKeyPressed = true;
+    input.up = true;
   } else {
-    this.upKeyPressed = false;
+    input.up = false;
   }
   
-  if (left !== this.leftKeyPressed || right !== this.rightKeyPressed || up !== this.upKeyPressed) {
-    this.socket.emit('playerInput', { left: this.leftKeyPressed , right: this.rightKeyPressed, up: this.upKeyPressed });
+  if (left !== input.left || right !== input.right || up !== input.up) {
+    this.socket.emit('playerInput', input);
   }
 }
 

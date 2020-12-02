@@ -1,6 +1,6 @@
 class NotTagged {
     constructor(p){
-      playerStates[p.playerId].colour = 0x000fff;
+      p.colour = 0x000fff;
     }
 
     goToNextState(p1, p2){
