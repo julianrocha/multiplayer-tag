@@ -5,7 +5,6 @@
     </head>
     <body>
         <script src="https://cdn.jsdelivr.net/npm/phaser@3.15.1/dist/phaser.min.js"></script>
-        <script src="js/game.js"></script>
         <script src="js/airLeanState.js"></script>
         <script src="js/inAirState.js"></script>
         <script src="js/SprintingState.js"></script>
@@ -13,5 +12,26 @@
         <script src="js/notTaggedState.js"></script>
         <script src="js/taggedState.js"></script>
         <script src="js/warmingUpState.js"></script>
+        <script src="js/game-scene.js"></script>
+        <script src="js/menu-scene.js"></script>
+        <div id="game"></div>
+        <script>
+            const phaserConfig = {
+                autoFocus: false,
+                type: Phaser.HEADLESS,
+                parent: 'game',
+                width: 800,
+                height: 600,
+                physics: {
+                    default: 'arcade',
+                    arcade: {
+                        debug: false
+                    }
+                },
+                scene: [MenuScene, GameScene]
+            };
+            const game = new Phaser.Game(phaserConfig);
+            window.gameLoaded();
+        </script>
     </body>
 </html>
