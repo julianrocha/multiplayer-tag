@@ -150,7 +150,7 @@ const config = {
   function removePlayer(self, playerId) {
     self.playerPhysGroup.getChildren().forEach((player) => {
       if (playerId === player.playerId) {
-        var tagged = player.ts instanceof Tagged;
+        var tagged = (player.ts instanceof Tagged || player.ts instanceof WarmingUp);
         player.destroy();
         var candidates = self.playerPhysGroup.getChildren();
         if(tagged && candidates.length > 0){
