@@ -1,6 +1,6 @@
 class WarmingUp {
     constructor(p){
-      p.colour = 0xffff00;
+      p.colour = 0xff748c;
       p.gameInstance.time.delayedCall(3000, this.transitionToTagged,[p], p.gameInstance);
     }
 
