@@ -4,7 +4,7 @@ const platformArray = [];
 const config = {
     type: Phaser.HEADLESS,
     parent: 'phaser-example',
-    width: 800,
+    width: 1000,
     height: 600,
     autoFocus: false,
     physics: {
@@ -35,7 +35,7 @@ const config = {
       buildPlatform(self, this.sys.game.config.width / 1, this.sys.game.config.height * 0.66, 0.5, 0.2);
       buildPlatform(self, this.sys.game.config.width / 2, this.sys.game.config.height * 0.33, 0.5, 0.2);
       
-      this.timeLeft = 120;
+      this.timeLeft = 10;
       this.time.addEvent({delay: 1000, loop: true, callback: tick, args: [self]});
       
       
@@ -100,6 +100,18 @@ const config = {
 
   function tick(self){
     io.emit('tick', self.timeLeft--);
+    if(self.timeLeft < 0){
+      self.timeLeft = 10;
+      winners = {};
+      self.playerPhysGroup.getChildren().forEach((player) => {
+        winners[player.playerId] = (player.ts instanceof Tagged || player.ts instanceof WarmingUp) ? false : true;
+      });
+      io.emit("roundOver", winners);
+      self.scene.pause();
+      setTimeout(() => {
+        self.scene.resume();
+      }, 3000);
+    }
   }
 
   function buildPlatform(self, xLoc, yLoc, xScale, yScale){
