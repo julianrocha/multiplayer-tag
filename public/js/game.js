@@ -21,19 +21,20 @@ var game = new Phaser.Game(config);
 function preload() {
   this.load.image('mushroom', 'assets/mushroom2.png');
   this.load.image('ground', 'assets/ground.png');
-  this.load.image('background', 'assets/clouds.jpeg');
+  this.load.image('background', 'assets/background.jpeg');
   this.load.image('arrow', 'assets/green-arrow.png');
 }
 
 var playerStates = {};
  
 function create() {
-  this.add.sprite(this.sys.game.config.width / 2, this.sys.game.config.height / 2, 'background');
+  this.background = this.add.sprite(this.sys.game.config.width / 2, this.sys.game.config.height / 2 + 50, 'background');
+  this.background.scaleX = 1.5;
+  this.background.scaleY = 1.5;
 
   var self = this;
   this.socket = io();
   this.players = this.add.group();
-  //this.meIndicator = this.add.text(0,0,"You", { font: "20px Arial", fill: "#ffffff", align: "center", backgroundColor: "#000000"});
   this.meIndicator = this.add.image(0,0,'arrow');
   this.meIndicator.flipY = true;
   this.meIndicator.scaleX = 0.03;

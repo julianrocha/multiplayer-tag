@@ -35,7 +35,7 @@ const config = {
       buildPlatform(self, this.sys.game.config.width / 1, this.sys.game.config.height * 0.66, 0.5, 0.2);
       buildPlatform(self, this.sys.game.config.width / 2, this.sys.game.config.height * 0.33, 0.5, 0.2);
       
-      this.timeLeft = 10;
+      this.timeLeft = 100;
       this.time.addEvent({delay: 1000, loop: true, callback: tick, args: [self]});
       
       
@@ -67,8 +67,6 @@ const config = {
             console.log('user ' + socket.id + ' disconnected');
             // remove player from server
             removePlayer(self, socket.id);
-            // remove this player from our playerStates object
-            delete playerStates[socket.id];
             // emit a message to all playerStates to remove this player
             io.emit('disconnect', socket.id);
         });
@@ -101,7 +99,7 @@ const config = {
   function tick(self){
     io.emit('tick', self.timeLeft--);
     if(self.timeLeft < 0){
-      self.timeLeft = 10;
+      self.timeLeft = 100;
       winners = {};
       self.playerPhysGroup.getChildren().forEach((player) => {
         winners[player.playerId] = (player.ts instanceof Tagged || player.ts instanceof WarmingUp) ? false : true;
@@ -139,7 +137,7 @@ const config = {
     }
     player.ms = new inAir(player);
     self.playerPhysGroup.getChildren().forEach((otherPlayer) => {
-      self.physics.add.overlap(player, otherPlayer, function (player, otherPlayer) {
+      self.physics.add.collider(player, otherPlayer, function (player, otherPlayer) {
         player.ts = player.ts.goToNextState(player, otherPlayer);
       });
     });
@@ -152,7 +150,15 @@ const config = {
   function removePlayer(self, playerId) {
     self.playerPhysGroup.getChildren().forEach((player) => {
       if (playerId === player.playerId) {
+        var tagged = player.ts instanceof Tagged;
         player.destroy();
+        var candidates = self.playerPhysGroup.getChildren();
+        if(tagged && candidates.length > 0){
+          random_candidate = candidates[Math.floor(Math.random() * candidates.length)];
+          random_candidate.ts = new Tagged(random_candidate);
+        }
+        // remove this player from our playerStates object
+        delete playerStates[player.playerId];
       }
     });
   }
