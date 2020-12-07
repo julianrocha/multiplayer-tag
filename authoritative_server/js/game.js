@@ -33,7 +33,7 @@ const config = {
       buildPlatform(self, this.sys.game.config.width / 2, this.sys.game.config.height * 1, 1.5, 0.2);
       buildPlatform(self, 0, this.sys.game.config.height * 0.66, 0.5, 0.2);
       buildPlatform(self, this.sys.game.config.width / 1, this.sys.game.config.height * 0.66, 0.5, 0.2);
-      buildPlatform(self, this.sys.game.config.width / 2, this.sys.game.config.height * 0.33, 0.5, 0.2);
+      buildPlatform(self, this.sys.game.config.width / 2, this.sys.game.config.height * 0.33, 0.2, 0.2);
       
       this.timeLeft = 100;
       this.time.addEvent({delay: 1000, loop: true, callback: tick, args: [self]});
